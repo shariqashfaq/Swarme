@@ -1,0 +1,153 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Welcome
+{% endblock %}
+
+{% block main %}
+
+{% if session.user_id %} 
+    
+<h2> Welcome, {{session.user_id}}</h2>
+
+<h5>swarme channel</h5>
+          <ul id="chat">
+          </ul>
+          <form class="chatForm" id="newMessage">
+              <input id="message" autocomplete="off" autofocus placeholder="Message" type="text">
+              <input id="roomid" type="hidden" value="all">
+              <input type="submit">
+          </form>
+
+        <ul id="chat1">
+        </ul>
+        <form class="chatForm" id="newMessage1">
+            <input id="message1" autocomplete="off" autofocus placeholder="Message" type="text">
+            <input id="roomID" type="hidden" value="room1">
+            <input type="submit">
+        </form> 
+
+        <ul id=channelList>
+            <button id="channel1">Join channel 1</button>
+        </ul>
+        
+        
+        <form id="createChannel">
+            <input id="channelName" autocomplete=off autofocus placeholder="Create a channel" type="text">
+            <input type="submit">
+        </form>
+
+        <ul id="users">
+            
+        </ul>
+
+<script>
+
+document.addEventListener('DOMContentLoaded', () => {
+
+    //connect to websocket
+    var socket = io.connect(location.protocol + '//' + document.domain + ':' + location.port);
+
+    //when connected, configure message submit button
+    socket.on('connect', () => {
+        
+        document.querySelector("#newMessage").onsubmit = () => {
+            alert("submit message");
+            const message = document.querySelector('#message').value;
+            const channel = document.querySelector('#roomid').value
+            socket.emit('submit message', {'message': message, 'channel' : channel});
+            document.querySelector('#message').value = '';
+            return false;    
+        };
+        
+        document.querySelector("#newMessage1").onsubmit = () => {
+            const message1 = document.querySelector('#message1').value;
+            const channel1 = document.querySelector('#roomID').value;
+            socket.emit('submit message', {'message': message1, 'channel' : channel1});
+            document.querySelector('#message1').value = '';
+            return false;
+        };
+
+        document.querySelector("#createChannel").onsubmit = () => {
+            const channelName = document.querySelector("#channelName").value;
+            socket.emit('createChannel', {'channelName': channelName});
+            document.querySelector("#creatChannel").value = '';
+            return false;
+        };
+        
+
+    //configure channel buttons
+        document.querySelector('#channel1').onclick = () => {
+            const room = "room1"
+            socket.emit('join', {'room' : room});
+        }; 
+
+         
+
+    //announce when new person joins room
+        socket.on('status', data => {
+            const li = document.createElement('li');
+            li.innerHTML = `${data.msg}`;
+            document.querySelector('#chat').append(li);
+
+    
+      });
+        
+    //when a new message is announced, add to message list, announce message event only fires if the user is in the same room from where the message orginated
+        socket.on('announce message', data => {
+          alert("announcing message");
+          const li = document.createElement('li');
+          li.innerHTML = `${data.username}: ${data.message}`;
+          document.querySelector('#chat').append(li);
+      });
+    
+    //create and link to new chatroom
+        socket.on('new channel', data => {
+            alert("joining new channel");
+            var newButton = document.createElement("button");
+            newButton.innerHTML = `${data.newChannel}`;
+            newButton.setAttribute("id",`${data.newChannel}`);
+            newButton.onclick = () => {
+                const room = newButton.id
+                socket.emit('join', {'room' : room});
+        };
+            document.querySelector('#channelList').append(newButton);
+        });
+    
+    });
+   
+
+});
+
+</script>
+
+
+{% else %}
+
+<h2> Welcome to swarme, there is much to do, please enter a chat name</h2>
+
+<form method="POST" action="/">
+    {{ form.hidden_tag() }}
+    <fieldset class="form-group">
+
+        <div class="form-group">
+            {{ form.username.label(class="form-control label") }}
+            {{ form.username(class="form-control form-control-sm") }}
+        </div>
+        
+    </fieldset>
+    <div class="form-group">
+        {{ form.submit(class="btn btn-outline-info") }}
+    </div>
+
+</form>
+
+
+{% endif %}
+
+
+
+
+
+
+{% endblock %}
