@@ -7,7 +7,7 @@ from forms import RegistrationForm, LoginForm, ChatForm
 
 app = Flask(__name__)
 
-app.config["SECRET_KEY"] = '5df5c987d14b7876e6c1151de66b920d'
+app.config["SECRET_KEY"] = os.getenv("SECRET_KEY")
 socketio = SocketIO(app)
 
 
